@@ -2,6 +2,7 @@ package core
 
 import (
   "context"
+  "strings"
 
   "github.com/google/go-github/github"
 )
@@ -53,21 +54,36 @@ func GetUserOrOrganization(login string, client *github.Client) (*GithubOwner, e
   }, nil
 }
 
-func GetRepositoriesFromOwner(login *string, client *github.Client) ([]*GithubRepository, error) {
+func GetRepositoriesFromOwner(login *string, client *github.Client, authenticated bool) ([]*GithubRepository, error) {
   var allRepos []*GithubRepository
   loginVal := *login
   ctx := context.Background()
   opt := &github.RepositoryListOptions{
     Type: "sources",
   }
+  if authenticated {
+    // The user endpoint only returns public repositories. Listing the
+    // authenticated user's accessible repositories also includes private
+    // repositories granted to the token.
+    opt = &github.RepositoryListOptions{
+      Visibility:  "all",
+      Affiliation: "owner,collaborator,organization_member",
+    }
+  }
 
   for {
-    repos, resp, err := client.Repositories.List(ctx, loginVal, opt)
+    owner := loginVal
+    if authenticated {
+      owner = ""
+    }
+    repos, resp, err := client.Repositories.List(ctx, owner, opt)
     if err != nil {
       return allRepos, err
     }
     for _, repo := range repos {
-      if !*repo.Fork {
+      if repo.Owner != nil && repo.Owner.Login != nil &&
+        strings.EqualFold(*repo.Owner.Login, loginVal) &&
+        (repo.Fork == nil || !*repo.Fork) {
         r := GithubRepository{
           Owner:         repo.Owner.Login,
           ID:            repo.ID,

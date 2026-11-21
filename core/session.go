@@ -119,24 +119,23 @@ func (s *Session) InitLogger() {
 }
 
 func (s *Session) InitGithubAccessToken() {
-  if *s.Options.GithubAccessToken == "" {
-    accessToken := os.Getenv(AccessTokenEnvVariable)
-    if accessToken == "" {
-      s.Out.Fatal("No GitHub access token given. Please provide via command line option or in the %s environment variable.\n", AccessTokenEnvVariable)
-    }
-    s.GithubAccessToken = accessToken
-  } else {
-    s.GithubAccessToken = *s.Options.GithubAccessToken
+  s.GithubAccessToken = *s.Options.GithubAccessToken
+  if s.GithubAccessToken == "" {
+    s.GithubAccessToken = os.Getenv(AccessTokenEnvVariable)
   }
 }
 
 func (s *Session) InitGithubClient() {
-  ctx := context.Background()
-  ts := oauth2.StaticTokenSource(
-    &oauth2.Token{AccessToken: s.GithubAccessToken},
-  )
-  tc := oauth2.NewClient(ctx, ts)
-  s.GithubClient = github.NewClient(tc)
+  if s.GithubAccessToken == "" {
+    s.GithubClient = github.NewClient(nil)
+  } else {
+    ctx := context.Background()
+    ts := oauth2.StaticTokenSource(
+      &oauth2.Token{AccessToken: s.GithubAccessToken},
+    )
+    tc := oauth2.NewClient(ctx, ts)
+    s.GithubClient = github.NewClient(tc)
+  }
   s.GithubClient.UserAgent = fmt.Sprintf("%s v%s", Name, Version)
 }
 

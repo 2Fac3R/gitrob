@@ -66,7 +66,7 @@ This command will download gitrob, install its dependencies, compile it and move
 
 ### Github access token
 
-Gitrob will need a Github access token in order to interact with the Github API.  [Create a personal access token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) and save it in an environment variable in your `.bashrc` or similar shell configuration file:
+Gitrob can scan public repositories without a GitHub access token. Unauthenticated API requests have lower rate limits, so larger scans may be incomplete. To use a token for a higher API rate limit, [create a personal access token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) and save it in an environment variable in your `.bashrc` or similar shell configuration file:
 
     export GITROB_ACCESS_TOKEN=deadbeefdeadbeefdeadbeefdeadbeefdeadbeef
 
